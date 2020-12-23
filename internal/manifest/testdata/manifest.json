@@ -1,0 +1,22 @@
+{
+  "coauthors": {
+    "georgemac": {
+      "id": "GeorgeMac",
+      "type": "github",
+      "name": "George",
+      "email": "1253326+GeorgeMac@users.noreply.github.com"
+    },
+    "gavincabbage": {
+      "id": "gavincabbage",
+      "type": "github",
+      "name": "Gavin Cabbage",
+      "email": "5225414+gavincabbage@users.noreply.github.com"
+    },
+    "stuartcarnie": {
+      "id": "stuartcarnie",
+      "type": "github",
+      "name": "Stuart Carnie",
+      "email": "52852+stuartcarnie@users.noreply.github.com"
+    }
+  }
+}

@@ -1,0 +1,76 @@
+#compdef _partner partner
+
+function _partner {
+    local line
+
+    function _commands {
+        local -a commands
+        commands=(
+            'clear:Clear active coauthors'
+            'manifest:Manifest management'
+            'set:Activate coauthors'
+            'status:List active coauthors'
+        )
+        _describe 'command' commands
+    }
+
+	_arguments \
+        "1: :_commands" \
+        "*::arg:->args"
+
+    case $line[1] in
+        set)
+            _partner_set
+        ;;
+        manifest)
+            _partner_manifest
+        ;;
+    esac
+}
+
+function _partner_manifest {
+    function _commands {
+        local -a commands
+        commands=(
+            'add:Manually add a coauthor'
+            'github-add:Add a coauthor from GitHub'
+            'list:List coauthors'
+            'remove:Remove a coauthor'
+        )
+        _describe 'command' commands
+    }
+
+	_arguments \
+        "1: :_commands" \
+        "*::arg:->args"
+
+     case $line[1] in
+         add)
+             _partner_manual_add
+         ;;
+         remove | rm)
+             _partner_remove
+         ;;
+     esac
+}
+
+function _partner_manual_add {
+    _arguments \
+        "--id[Identifier for referring to the coauthor]" \
+        "--email[Email address]" \
+        "--name[Full name]"
+}
+
+function _partner_set {
+    _coauthor_ids
+}
+
+function _partner_remove {
+    _coauthor_ids
+}
+
+function _coauthor_ids {
+    _alternative \
+        "ids:id:($(partner manifest list | sed '1d' | cut -d ' ' -f1 | tr -d '[]'))"
+}
+
