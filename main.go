@@ -54,9 +54,8 @@ func main() {
 					},
 				},
 				{
-					Name:      "add",
-					Usage:     "Add a coauthor by manually entering their information",
-					ArgsUsage: " ",
+					Name:  "add",
+					Usage: "Add a coauthor by manually entering their information",
 					Flags: []cli.Flag{
 						&cli.StringFlag{
 							Name:     "id",
