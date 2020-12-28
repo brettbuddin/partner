@@ -12,15 +12,15 @@ Add some colleagues to your list of coauthors:
 $ partner manifest gh-add GeorgeMac gavincabbage stuartcarnie
 
 # Add a friend who doesn't use GitHub
-$ partner manifest add --id=derek --email=derek@strongbeard.org --name="Derek Strongbeard"
+$ partner manifest add --id=gemini --email=gemini@strongbeard.org --name="Gemini Strongbeard"
 
 # List all coauthors
 $ partner manifest ls
-ID            NAME               EMAIL                                          TYPE
-derek         Derek Strongbeard  derek@strongbeard.org                          manual
-gavincabbage  Gavin Cabbage      5225414+gavincabbage@users.noreply.github.com  github
-GeorgeMac     George             1253326+GeorgeMac@users.noreply.github.com     github
-stuartcarnie  Stuart Carnie      52852+stuartcarnie@users.noreply.github.com    github
+ID            NAME                EMAIL                                          TYPE
+gemini        Gemini Strongbeard  gemini@strongbeard.org                         manual
+gavincabbage  Gavin Cabbage       5225414+gavincabbage@users.noreply.github.com  github
+GeorgeMac     George              1253326+GeorgeMac@users.noreply.github.com     github
+stuartcarnie  Stuart Carnie       52852+stuartcarnie@users.noreply.github.com    github
 ```
 
 Activate a few for a pairing session:
