@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/brettbuddin/partner/internal/manifest"
 )
@@ -13,13 +14,16 @@ type GitHubFetcher struct {
 	BaseURL string
 }
 
-func (gh *GitHubFetcher) Fetch(username string) (manifest.Coauthor, error) {
-	url := fmt.Sprintf("%s/users/%s", gh.BaseURL, username)
-	r, err := http.NewRequest(http.MethodGet, url, nil)
+func (f *GitHubFetcher) Fetch(username string) (manifest.Coauthor, error) {
+	parsed, err := url.Parse(fmt.Sprintf("%s/users/%s", f.BaseURL, username))
 	if err != nil {
 		return manifest.Coauthor{}, err
 	}
-	resp, err := gh.Client.Do(r)
+	r, err := http.NewRequest(http.MethodGet, parsed.String(), nil)
+	if err != nil {
+		return manifest.Coauthor{}, err
+	}
+	resp, err := f.Client.Do(r)
 	if err != nil {
 		return manifest.Coauthor{}, err
 	}

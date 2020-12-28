@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/brettbuddin/partner/internal/manifest"
 )
@@ -13,13 +14,20 @@ type GitLabFetcher struct {
 	BaseURL string
 }
 
-func (gh *GitLabFetcher) Fetch(username string) (manifest.Coauthor, error) {
-	url := fmt.Sprintf("%s/api/v4/users?username=%s", gh.BaseURL, username)
-	r, err := http.NewRequest(http.MethodGet, url, nil)
+func (f *GitLabFetcher) Fetch(username string) (manifest.Coauthor, error) {
+	parsed, err := url.Parse(fmt.Sprintf("%s/api/v4/users", f.BaseURL))
 	if err != nil {
 		return manifest.Coauthor{}, err
 	}
-	resp, err := gh.Client.Do(r)
+	query := parsed.Query()
+	query.Set("username", username)
+	parsed.RawQuery = query.Encode()
+
+	r, err := http.NewRequest(http.MethodGet, parsed.String(), nil)
+	if err != nil {
+		return manifest.Coauthor{}, err
+	}
+	resp, err := f.Client.Do(r)
 	if err != nil {
 		return manifest.Coauthor{}, err
 	}
