@@ -36,9 +36,25 @@ gavincabbage  Gavin Cabbage  5225414+gavincabbage@users.noreply.github.com  gith
 GeorgeMac     George         1253326+GeorgeMac@users.noreply.github.com     github
 ```
 
-Make some commits together... ✍️
+`partner` has set a `commit.template` configuration for this repository with
+appropriate `Co-Authored-By` trailers. You can view this template like this:
 
-Clean up:
+```
+$ cat $(git config commit.template)
+
+
+# Managed by partner
+#
+# partner-id: gavincabbage
+Co-Authored-By: "Gavin Cabbage" <5225414+gavincabbage@users.noreply.github.com>
+# partner-id: GeorgeMac
+Co-Authored-By: "George" <1253326+GeorgeMac@users.noreply.github.com>
+```
+
+The template will be used as a starting point for any commit messages you author
+with your party.
+
+To clean up:
 
 ```
 # Unset all coauthors
