@@ -34,7 +34,7 @@ func main() {
 				{
 					Name:      "github-add",
 					Aliases:   []string{"gh-add"},
-					Usage:     "Add a coauthor by fetching their information from GitHub",
+					Usage:     "Add a coauthor from GitHub username",
 					ArgsUsage: "[username, ...]",
 					Action: func(c *cli.Context) error {
 						if c.Args().Len() == 0 {
@@ -46,6 +46,28 @@ func main() {
 						}
 						fetcher := &command.GitHubFetcher{
 							BaseURL: "https://api.github.com",
+							Client: &http.Client{
+								Timeout: 10 * time.Second,
+							},
+						}
+						return command.New(paths).ManifestFetchAdd(fetcher, c.Args().Slice()...)
+					},
+				},
+				{
+					Name:      "gitlab-add",
+					Aliases:   []string{"gl-add"},
+					Usage:     "Add a coauthor from GitLab username",
+					ArgsUsage: "[username, ...]",
+					Action: func(c *cli.Context) error {
+						if c.Args().Len() == 0 {
+							cli.ShowCommandHelp(c, c.Command.Name)
+							return codeError{
+								error: fmt.Errorf("at least one GitLab username is required"),
+								code:  2,
+							}
+						}
+						fetcher := &command.GitLabFetcher{
+							BaseURL: "https://gitlab.com",
 							Client: &http.Client{
 								Timeout: 10 * time.Second,
 							},

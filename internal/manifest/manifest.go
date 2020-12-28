@@ -36,6 +36,7 @@ type Coauthor struct {
 // Coauthor types
 const (
 	CoauthorTypeGitHub = "github"
+	CoauthorTypeGitLab = "gitlab"
 	CoauthorTypeManual = "manual"
 )
 

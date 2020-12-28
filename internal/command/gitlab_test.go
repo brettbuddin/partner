@@ -13,13 +13,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGitHubFetcher(t *testing.T) {
+func TestGitLabFetcher(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/users/brettbuddin" {
+		if r.URL.Path != "/api/v4/users" {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		f, err := os.Open("testdata/github_user.json")
+		if r.FormValue("username") != "brettbuddin" {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		f, err := os.Open("testdata/gitlab_user.json")
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -29,7 +33,7 @@ func TestGitHubFetcher(t *testing.T) {
 	}))
 	defer server.Close()
 
-	f := GitHubFetcher{
+	f := GitLabFetcher{
 		Client: &http.Client{
 			Timeout: 5 * time.Second,
 		},
@@ -40,19 +44,18 @@ func TestGitHubFetcher(t *testing.T) {
 	require.Equal(t, manifest.Coauthor{
 		ID:    "brettbuddin",
 		Name:  "Brett Buddin",
-		Email: "6059+brettbuddin@users.noreply.github.com",
-		Type:  manifest.CoauthorTypeGitHub,
+		Email: "4453516-brettbuddin@users.noreply.gitlab.com",
+		Type:  manifest.CoauthorTypeGitLab,
 	}, ca)
 }
 
-func TestGitHubFetcher_Error(t *testing.T) {
+func TestGitLabFetcher_Error(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintln(w, `{"message": "Not Found"}`)
+		fmt.Fprintln(w, `[]`)
 	}))
 	defer server.Close()
 
-	f := GitHubFetcher{
+	f := GitLabFetcher{
 		Client: &http.Client{
 			Timeout: 5 * time.Second,
 		},
@@ -60,5 +63,5 @@ func TestGitHubFetcher_Error(t *testing.T) {
 	}
 	_, err := f.Fetch("brettbuddin-doesntexist")
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "Not Found")
+	require.Contains(t, err.Error(), "username not found")
 }
