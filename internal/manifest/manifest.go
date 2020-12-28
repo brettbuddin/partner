@@ -98,8 +98,8 @@ func (m *Manifest) Add(coauthors ...Coauthor) error {
 	return nil
 }
 
-// Save saves the manifest to a JSON file
-func (m *Manifest) Save(path string) error {
+// WriteFile saves the manifest to a JSON file
+func WriteFile(path string, m *Manifest) error {
 	if err := os.MkdirAll(filepath.Dir(path), os.ModePerm); err != nil {
 		return err
 	}

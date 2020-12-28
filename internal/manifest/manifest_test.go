@@ -131,7 +131,7 @@ func TestSave(t *testing.T) {
 	m.Remove("stuartcarnie")
 
 	newFile := filepath.Join(dir, "changed.json")
-	err = m.Save(newFile)
+	err = WriteFile(newFile, m)
 	require.NoError(t, err)
 
 	cm, err := Load(newFile)

@@ -15,9 +15,9 @@ const coAuthoredBy = "Co-Authored-By"
 
 var extractPattern = regexp.MustCompile("# partner-id: (.+)")
 
-// Active returns the IDs of coauthors referenced in the git commit
-// template file.
-func Active(path string) ([]string, error) {
+// ExtractIDs returns the IDs of coauthors referenced in the git commit template
+// file.
+func ExtractIDs(path string) ([]string, error) {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
@@ -39,8 +39,17 @@ type Template struct {
 	Coauthors []manifest.Coauthor
 }
 
-// Save saves and registers the git commit template
-func (t Template) Save(path string) error {
+func (t Template) trailers() string {
+	var b strings.Builder
+	b.WriteString("\n\n# Managed by partner\n#\n")
+	for _, ca := range t.Coauthors {
+		fmt.Fprintf(&b, "# partner-id: %s\n%s: %q <%s>\n", ca.ID, coAuthoredBy, ca.Name, ca.Email)
+	}
+	return b.String()
+}
+
+// WriteFile saves and registers the git commit template
+func WriteFile(path string, t Template) error {
 	f, err := os.Create(path)
 	if err != nil {
 		return fmt.Errorf("failed to open commit template: %w", err)
@@ -56,13 +65,4 @@ func (t Template) Save(path string) error {
 		return fmt.Errorf("failed to write to commit template file: %w", err)
 	}
 	return nil
-}
-
-func (t Template) trailers() string {
-	var b strings.Builder
-	b.WriteString("\n\n# Managed by partner\n#\n")
-	for _, ca := range t.Coauthors {
-		fmt.Fprintf(&b, "# partner-id: %s\n%s: %q <%s>\n", ca.ID, coAuthoredBy, ca.Name, ca.Email)
-	}
-	return b.String()
 }

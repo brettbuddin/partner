@@ -11,7 +11,7 @@ import (
 )
 
 func TestActiveCoauthors(t *testing.T) {
-	ids, err := Active("testdata/gitmessage.txt")
+	ids, err := ExtractIDs("testdata/gitmessage.txt")
 	require.NoError(t, err)
 	require.Equal(t, []string{"persona", "personb"}, ids)
 }
@@ -39,7 +39,7 @@ func TestSave(t *testing.T) {
 	}
 
 	path := filepath.Join(dir, "gitmessage.txt")
-	err = tmpl.Save(path)
+	err = WriteFile(path, tmpl)
 	require.NoError(t, err)
 
 	expected, err := ioutil.ReadFile("testdata/gitmessage.txt")

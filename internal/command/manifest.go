@@ -52,7 +52,7 @@ func (c *Command) ManifestRemove(ids ...string) error {
 	if err := m.Remove(ids...); err != nil {
 		return err
 	}
-	return m.Save(c.Paths.ManifestFile)
+	return manifest.WriteFile(c.Paths.ManifestFile, m)
 }
 
 // UserFetcher fetches coauthor information from somewhere else
@@ -78,7 +78,7 @@ func (c *Command) ManifestFetchAdd(fetcher UserFetcher, usernames ...string) err
 	if err := m.Add(coauthors...); err != nil {
 		return err
 	}
-	return m.Save(c.Paths.ManifestFile)
+	return manifest.WriteFile(c.Paths.ManifestFile, m)
 }
 
 // ManifestAdd adds a coauthor using manually entered information
@@ -96,5 +96,5 @@ func (c *Command) ManifestAdd(id, name, email string) error {
 	if err != nil {
 		return err
 	}
-	return m.Save(c.Paths.ManifestFile)
+	return manifest.WriteFile(c.Paths.ManifestFile, m)
 }

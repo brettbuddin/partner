@@ -18,7 +18,7 @@ func (c *Command) TemplateStatus(w io.Writer) error {
 		return err
 	}
 
-	ids, err := template.Active(c.Paths.Repository.TemplateFile)
+	ids, err := template.ExtractIDs(c.Paths.Repository.TemplateFile)
 	if err != nil {
 		return err
 	}
@@ -36,7 +36,7 @@ func (c *Command) TemplateSet(ids ...string) error {
 		return err
 	}
 
-	existingIDs, err := template.Active(c.Paths.Repository.TemplateFile)
+	existingIDs, err := template.ExtractIDs(c.Paths.Repository.TemplateFile)
 	if err != nil {
 		return err
 	}
@@ -47,8 +47,8 @@ func (c *Command) TemplateSet(ids ...string) error {
 		return err
 	}
 
-	tmpl := template.Template{Coauthors: coauthors}
-	if err := tmpl.Save(c.Paths.Repository.TemplateFile); err != nil {
+	t := template.Template{Coauthors: coauthors}
+	if err := template.WriteFile(c.Paths.Repository.TemplateFile, t); err != nil {
 		return err
 	}
 	return repository.SetCommitTemplate(c.Paths.Repository.Root, c.Paths.Repository.TemplateFile)
