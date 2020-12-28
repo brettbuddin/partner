@@ -17,8 +17,8 @@ $ partner manifest add --id=gemini --email=gemini@strongbeard.org --name="Gemini
 # List all coauthors
 $ partner manifest ls
 ID            NAME                EMAIL                                          TYPE
-gemini        Gemini Strongbeard  gemini@strongbeard.org                         manual
 gavincabbage  Gavin Cabbage       5225414+gavincabbage@users.noreply.github.com  github
+gemini        Gemini Strongbeard  gemini@strongbeard.org                         manual
 GeorgeMac     George              1253326+GeorgeMac@users.noreply.github.com     github
 stuartcarnie  Stuart Carnie       52852+stuartcarnie@users.noreply.github.com    github
 ```
