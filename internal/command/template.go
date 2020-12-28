@@ -26,7 +26,7 @@ func (c *Command) TemplateStatus(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	return printCoauthors(w, active...)
+	return writeList(w, active...)
 }
 
 // TemplateSet activates a coauthor in the Template

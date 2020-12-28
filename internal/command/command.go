@@ -1,8 +1,13 @@
 package command
 
 import (
+	"fmt"
+	"io"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
+	"text/tabwriter"
 
 	"github.com/atrox/homedir"
 	"github.com/brettbuddin/partner/internal/manifest"
@@ -55,4 +60,21 @@ func DefaultPaths(pwd string) (Paths, error) {
 			TemplateFile: filepath.Join(root, ".git/gitmessage.txt"),
 		},
 	}, nil
+}
+
+func writeList(w io.Writer, coauthors ...manifest.Coauthor) error {
+	if len(coauthors) == 0 {
+		return nil
+	}
+
+	sort.Slice(coauthors, func(i, j int) bool {
+		return strings.ToLower(coauthors[i].ID) < strings.ToLower(coauthors[j].ID)
+	})
+
+	tabw := tabwriter.NewWriter(w, 5, 2, 2, ' ', 0)
+	fmt.Fprintln(tabw, "ID\tNAME\tEMAIL\tTYPE")
+	for _, ca := range coauthors {
+		fmt.Fprintf(tabw, "%s\t%s\t%s\t%s\n", ca.ID, ca.Name, ca.Email, ca.Type)
+	}
+	return tabw.Flush()
 }

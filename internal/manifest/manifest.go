@@ -17,6 +17,14 @@ type Manifest struct {
 	Coauthors map[string]Coauthor `json:"coauthors"`
 }
 
+func (m Manifest) Slice() []Coauthor {
+	var l []Coauthor
+	for _, ca := range m.Coauthors {
+		l = append(l, ca)
+	}
+	return l
+}
+
 // Coauthor is an identity to be referenced as a commit coauthor
 type Coauthor struct {
 	ID    string `json:"id"`

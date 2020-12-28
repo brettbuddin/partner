@@ -1,11 +1,7 @@
 package command
 
 import (
-	"fmt"
 	"io"
-	"sort"
-	"strings"
-	"text/tabwriter"
 
 	"github.com/brettbuddin/partner/internal/manifest"
 )
@@ -19,28 +15,7 @@ func (c *Command) ManifestList(w io.Writer) error {
 	if len(m.Coauthors) == 0 {
 		return nil
 	}
-	var coauthors []manifest.Coauthor
-	for _, ca := range m.Coauthors {
-		coauthors = append(coauthors, ca)
-	}
-	return printCoauthors(w, coauthors...)
-}
-
-func printCoauthors(w io.Writer, coauthors ...manifest.Coauthor) error {
-	if len(coauthors) == 0 {
-		return nil
-	}
-
-	sort.Slice(coauthors, func(i, j int) bool {
-		return strings.ToLower(coauthors[i].ID) < strings.ToLower(coauthors[j].ID)
-	})
-
-	tabw := tabwriter.NewWriter(w, 5, 2, 2, ' ', 0)
-	fmt.Fprintln(tabw, "ID\tNAME\tEMAIL\tTYPE")
-	for _, ca := range coauthors {
-		fmt.Fprintf(tabw, "%s\t%s\t%s\t%s\n", ca.ID, ca.Name, ca.Email, ca.Type)
-	}
-	return tabw.Flush()
+	return writeList(w, m.Slice()...)
 }
 
 // ManifestRemove removes a coauthor from the Manifest
