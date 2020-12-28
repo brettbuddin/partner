@@ -34,7 +34,7 @@ func main() {
 				{
 					Name:      "github-add",
 					Aliases:   []string{"gh-add"},
-					Usage:     "Add a coauthor from GitHub username",
+					Usage:     "Add a coauthor from GitHub usernames",
 					ArgsUsage: "[username, ...]",
 					Action: func(c *cli.Context) error {
 						if c.Args().Len() == 0 {
@@ -56,7 +56,7 @@ func main() {
 				{
 					Name:      "gitlab-add",
 					Aliases:   []string{"gl-add"},
-					Usage:     "Add a coauthor from GitLab username",
+					Usage:     "Add a coauthor from GitLab usernames",
 					ArgsUsage: "[username, ...]",
 					Action: func(c *cli.Context) error {
 						if c.Args().Len() == 0 {
