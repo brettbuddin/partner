@@ -1,7 +1,8 @@
 # partner
 
 `partner` is a tool for managing coauthors for `git` commits. It allows you to
-quickly annotate commits with appropriate `Co-Authored-By` trailers.
+quickly annotate commits with appropriate `Co-Authored-By` trailers. Supports
+adding users by GitHub and GitLab usernames.
 
 ## Usage
 
