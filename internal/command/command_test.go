@@ -15,21 +15,25 @@ import (
 
 func TestManifestManagement(t *testing.T) {
 	cmd := New(newWorkspace(t))
-	err := cmd.ManifestManualAdd("brett", "Brett Buddin", "brett@buddin.org")
+
+	// Add a coauthor
+	err := cmd.ManifestAdd("brett", "Brett Buddin", "brett@buddin.org")
 	require.NoError(t, err)
 
+	// List the coauthors
 	out := bytes.NewBuffer(nil)
 	err = cmd.ManifestList(out)
 	require.NoError(t, err)
-
-	require.Equal(t, trimLeft(`
+	require.Equal(t, listExample(`
 ID     NAME          EMAIL             TYPE
 brett  Brett Buddin  brett@buddin.org  manual
 `), out.String())
 
+	// Remove the coauthor
 	err = cmd.ManifestRemove("brett")
 	require.NoError(t, err)
 
+	// Verify that the coauthor was removed
 	out.Truncate(0)
 	err = cmd.ManifestList(out)
 	require.NoError(t, err)
@@ -38,37 +42,43 @@ brett  Brett Buddin  brett@buddin.org  manual
 
 func TestActivationWorkflow(t *testing.T) {
 	cmd := New(newWorkspace(t))
-	err := cmd.ManifestManualAdd("brett", "Brett Buddin", "brett@buddin.org")
+
+	// Add and activate the first coauthor
+	err := cmd.ManifestAdd("brett", "Brett Buddin", "brett@buddin.org")
 	require.NoError(t, err)
 	err = cmd.TemplateSet("brett")
 	require.NoError(t, err)
 
-	tmplb, err := ioutil.ReadFile(cmd.Paths.TemplateFile)
+	// Verify the template contains what we'd expect
+	tmplb, err := ioutil.ReadFile(cmd.Paths.Repository.TemplateFile)
 	require.NoError(t, err)
-	require.Equal(t, prefixLine(`
+	require.Equal(t, templateExample(`
 # Managed by partner
 #
 # partner-id: brett
 Co-Authored-By: "Brett Buddin" <brett@buddin.org>
 `), string(tmplb))
 
-	err = cmd.ManifestManualAdd("persona", "Person A", "a@buddin.org")
+	// Add and activate the second coauthor
+	err = cmd.ManifestAdd("persona", "Person A", "a@buddin.org")
 	require.NoError(t, err)
 	err = cmd.TemplateSet("persona")
 	require.NoError(t, err)
 
+	// List the active coauthors
 	out := bytes.NewBuffer(nil)
 	err = cmd.TemplateStatus(out)
 	require.NoError(t, err)
-	require.Equal(t, trimLeft(`
+	require.Equal(t, listExample(`
 ID       NAME          EMAIL             TYPE
 brett    Brett Buddin  brett@buddin.org  manual
 persona  Person A      a@buddin.org      manual
 `), out.String())
 
-	tmplb, err = ioutil.ReadFile(cmd.Paths.TemplateFile)
+	// Verify the template contains what we'd expect
+	tmplb, err = ioutil.ReadFile(cmd.Paths.Repository.TemplateFile)
 	require.NoError(t, err)
-	require.Equal(t, prefixLine(`
+	require.Equal(t, templateExample(`
 # Managed by partner
 #
 # partner-id: brett
@@ -77,15 +87,16 @@ Co-Authored-By: "Brett Buddin" <brett@buddin.org>
 Co-Authored-By: "Person A" <a@buddin.org>
 `), string(tmplb))
 
+	// Unset all active coauthors, and verify that the tool reports nothing
 	err = cmd.TemplateClear()
 	require.NoError(t, err)
-
 	out.Truncate(0)
 	err = cmd.TemplateStatus(out)
 	require.NoError(t, err)
 	require.Equal(t, "", out.String())
 
-	_, err = os.Stat(cmd.Paths.TemplateFile)
+	// Verify the template file is deleted
+	_, err = os.Stat(cmd.Paths.Repository.TemplateFile)
 	require.Error(t, err)
 }
 
@@ -104,35 +115,64 @@ func newWorkspace(t *testing.T) Paths {
 	require.NoError(t, err)
 
 	return Paths{
-		WorkingDir:   tmp,
+		Repository: RepositoryPaths{
+			Root:         tmp,
+			TemplateFile: filepath.Join(tmp, ".git/gitmessage.txt"),
+		},
 		ManifestFile: filepath.Join(tmp, "manifest.json"),
-		TemplateFile: filepath.Join(tmp, ".git/gitmessage.txt"),
 	}
 }
 
-func TestDefaultPaths(t *testing.T) {
+func TestDefaultPaths_RepositoryPathCalculation(t *testing.T) {
 	wsPaths := newWorkspace(t)
 
-	os.Setenv("PARTNER_MANIFEST", filepath.Join(wsPaths.WorkingDir, "manifest.json"))
-	paths, err := DefaultPaths(wsPaths.WorkingDir)
+	paths, err := DefaultPaths(wsPaths.Repository.Root)
 
 	// `git rev-parse --show-toplevel` returns a different path than I set.
 	// Probably a macOS thing. If this test starts to fail, this is probably
 	// why.
-	paths.TemplateFile = strings.TrimPrefix(paths.TemplateFile, "/private")
+	paths.Repository.Root = strings.TrimPrefix(paths.Repository.Root, "/private")
+	paths.Repository.TemplateFile = strings.TrimPrefix(paths.Repository.TemplateFile, "/private")
 
 	require.NoError(t, err)
-	require.Equal(t, Paths{
-		WorkingDir:   wsPaths.WorkingDir,
-		TemplateFile: wsPaths.TemplateFile,
-		ManifestFile: wsPaths.ManifestFile,
-	}, paths)
+	require.Equal(t, wsPaths.Repository, paths.Repository)
 }
 
-func trimLeft(s string) string {
+func TestDefaultPath_PathExpansion(t *testing.T) {
+	wsPaths := newWorkspace(t)
+
+	t.Run("default manifest path", func(t *testing.T) {
+		paths, err := DefaultPaths(wsPaths.Repository.Root)
+		require.NoError(t, err)
+		require.NotEqual(t, "~/.config/partner/manifest.json", paths.ManifestFile)
+		require.True(t, strings.HasSuffix(paths.ManifestFile, "/.config/partner/manifest.json"), "tilde was not expanded to home directory")
+	})
+
+	t.Run("overridden manifest path", func(t *testing.T) {
+		os.Setenv("PARTNER_MANIFEST", "~/other/path/manifest.json")
+		defer os.Unsetenv("PARTNER_MANIFEST")
+
+		paths, err := DefaultPaths(wsPaths.Repository.Root)
+		require.NoError(t, err)
+		require.NotEqual(t, "~/other/path/manifest.json", paths.ManifestFile)
+		require.True(t, strings.HasSuffix(paths.ManifestFile, "/other/path/manifest.json"), "tilde was not expanded to home directory")
+	})
+
+	t.Run("overridden manifest path with environment variable", func(t *testing.T) {
+		os.Setenv("PARTNER_MANIFEST", "$HOME/.config/partner/manifest.json")
+		defer os.Unsetenv("PARTNER_MANIFEST")
+
+		paths, err := DefaultPaths(wsPaths.Repository.Root)
+		require.NoError(t, err)
+		require.NotEqual(t, "$HOME/.config/partner/manifest.json", paths.ManifestFile)
+		require.True(t, strings.HasSuffix(paths.ManifestFile, "/.config/partner/manifest.json"), "environment variable was not expanded to home directory")
+	})
+}
+
+func listExample(s string) string {
 	return strings.TrimLeftFunc(s, unicode.IsSpace)
 }
 
-func prefixLine(s string) string {
+func templateExample(s string) string {
 	return "\n" + s
 }

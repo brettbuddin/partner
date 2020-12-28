@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/brettbuddin/partner/internal/manifest"
+	"github.com/brettbuddin/partner/internal/repository"
 	"github.com/brettbuddin/partner/internal/template"
 )
 
@@ -14,13 +15,10 @@ import (
 func (c *Command) TemplateStatus(w io.Writer) error {
 	m, err := manifest.Load(c.Paths.ManifestFile)
 	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return nil
-		}
 		return err
 	}
 
-	ids, err := template.Active(c.Paths.TemplateFile)
+	ids, err := template.Active(c.Paths.Repository.TemplateFile)
 	if err != nil {
 		return err
 	}
@@ -38,7 +36,7 @@ func (c *Command) TemplateSet(ids ...string) error {
 		return err
 	}
 
-	existingIDs, err := template.Active(c.Paths.TemplateFile)
+	existingIDs, err := template.Active(c.Paths.Repository.TemplateFile)
 	if err != nil {
 		return err
 	}
@@ -50,16 +48,16 @@ func (c *Command) TemplateSet(ids ...string) error {
 	}
 
 	tmpl := template.Template{Coauthors: coauthors}
-	if err := tmpl.Save(c.Paths.TemplateFile); err != nil {
+	if err := tmpl.Save(c.Paths.Repository.TemplateFile); err != nil {
 		return err
 	}
-	return template.Set(c.Paths.WorkingDir, c.Paths.TemplateFile)
+	return repository.SetCommitTemplate(c.Paths.Repository.Root, c.Paths.Repository.TemplateFile)
 }
 
 // TemplateClear emptys the coauthors Template
 func (c *Command) TemplateClear() error {
-	defer template.Unset(c.Paths.WorkingDir)
-	if err := os.Remove(c.Paths.TemplateFile); err != nil {
+	defer repository.UnsetCommitTemplate(c.Paths.Repository.Root)
+	if err := os.Remove(c.Paths.Repository.TemplateFile); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return nil
 		}

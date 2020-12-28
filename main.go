@@ -40,7 +40,7 @@ func main() {
 						if c.Args().Len() == 0 {
 							cli.ShowCommandHelp(c, c.Command.Name)
 							return codeError{
-								error: fmt.Errorf("At least one GitHub username is required"),
+								error: fmt.Errorf("at least one GitHub username is required"),
 								code:  2,
 							}
 						}
@@ -77,7 +77,7 @@ func main() {
 						},
 					},
 					Action: func(c *cli.Context) error {
-						return command.New(paths).ManifestManualAdd(
+						return command.New(paths).ManifestAdd(
 							c.String("id"),
 							c.String("name"),
 							c.String("email"),
@@ -101,7 +101,7 @@ func main() {
 						if c.Args().Len() == 0 {
 							cli.ShowCommandHelp(c, c.Command.Name)
 							return codeError{
-								error: fmt.Errorf("At least one ID is required"),
+								error: fmt.Errorf("at least one ID is required"),
 								code:  2,
 							}
 						}
@@ -126,7 +126,7 @@ func main() {
 				if c.Args().Len() == 0 {
 					cli.ShowCommandHelp(c, c.Command.Name)
 					return codeError{
-						error: fmt.Errorf("At least one ID is required"),
+						error: fmt.Errorf("at least one ID is required"),
 						code:  2,
 					}
 				}

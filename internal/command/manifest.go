@@ -1,10 +1,8 @@
 package command
 
 import (
-	"errors"
 	"fmt"
 	"io"
-	"os"
 	"sort"
 	"strings"
 	"text/tabwriter"
@@ -16,9 +14,6 @@ import (
 func (c *Command) ManifestList(w io.Writer) error {
 	m, err := manifest.Load(c.Paths.ManifestFile)
 	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return nil
-		}
 		return err
 	}
 	if len(m.Coauthors) == 0 {
@@ -54,7 +49,9 @@ func (c *Command) ManifestRemove(ids ...string) error {
 	if err != nil {
 		return err
 	}
-	m.Remove(ids...)
+	if err := m.Remove(ids...); err != nil {
+		return err
+	}
 	return m.Save(c.Paths.ManifestFile)
 }
 
@@ -84,8 +81,8 @@ func (c *Command) ManifestFetchAdd(fetcher UserFetcher, usernames ...string) err
 	return m.Save(c.Paths.ManifestFile)
 }
 
-// ManifestManualAdd adds a coauthor using manually entered information
-func (c *Command) ManifestManualAdd(id, name, email string) error {
+// ManifestAdd adds a coauthor using manually entered information
+func (c *Command) ManifestAdd(id, name, email string) error {
 	m, err := manifest.Load(c.Paths.ManifestFile)
 	if err != nil {
 		return err

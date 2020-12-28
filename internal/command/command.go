@@ -1,15 +1,12 @@
 package command
 
 import (
-	"bytes"
-	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
 
 	"github.com/atrox/homedir"
 	"github.com/brettbuddin/partner/internal/manifest"
+	"github.com/brettbuddin/partner/internal/repository"
 )
 
 // Command holds actions for commands
@@ -22,55 +19,40 @@ func New(paths Paths) *Command {
 	return &Command{Paths: paths}
 }
 
-// Paths contains paths to directories
+// Paths contains paths necessary for partner to do its work
 type Paths struct {
-	WorkingDir   string
-	TemplateFile string
 	ManifestFile string
+	Repository   RepositoryPaths
 }
 
-// DefaultPaths returns calculated Paths based on the environment
+// Repository specific paths
+type RepositoryPaths struct {
+	Root         string
+	TemplateFile string
+}
+
+// DefaultPaths returns calculated Git repository root, commit template and
+// manifest paths relative to the current working directory.
 func DefaultPaths(pwd string) (Paths, error) {
-	manifestPath := os.Getenv("PARTNER_MANIFEST")
-	if manifestPath == "" {
-		manifestPath = manifest.DefaultPath
-	}
-	manifestPath, err := homedir.Expand(manifestPath)
+	root, err := repository.Root(pwd)
 	if err != nil {
 		return Paths{}, err
 	}
 
-	templatePath, err := templatePath(pwd)
+	manifestPath := os.Getenv("PARTNER_MANIFEST")
+	if manifestPath == "" {
+		manifestPath = manifest.DefaultPath
+	}
+	manifestPath, err = homedir.Expand(manifestPath)
 	if err != nil {
 		return Paths{}, err
 	}
 
 	return Paths{
-		WorkingDir:   pwd,
-		TemplateFile: templatePath,
 		ManifestFile: os.ExpandEnv(manifestPath),
+		Repository: RepositoryPaths{
+			Root:         root,
+			TemplateFile: filepath.Join(root, ".git/gitmessage.txt"),
+		},
 	}, nil
-}
-
-func templatePath(pwd string) (string, error) {
-	path, err := repositoryRoot(pwd)
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(path, ".git/gitmessage.txt"), nil
-}
-
-func repositoryRoot(pwd string) (string, error) {
-	var (
-		stdout = bytes.NewBuffer(nil)
-		stderr = bytes.NewBuffer(nil)
-	)
-	cmd := exec.Command("git", "rev-parse", "--show-toplevel")
-	cmd.Dir = pwd
-	cmd.Stdout = stdout
-	cmd.Stderr = stderr
-	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf(strings.TrimSpace(stderr.String()))
-	}
-	return strings.TrimSpace(stdout.String()), nil
 }
