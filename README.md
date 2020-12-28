@@ -52,7 +52,8 @@ Co-Authored-By: "George" <1253326+GeorgeMac@users.noreply.github.com>
 ```
 
 The template will be used as a starting point for any commit messages you author
-with your party.
+with your party. **Remember:** Using `git commit --message` overrides the entire
+commit message and will not use the template.
 
 To clean up:
 
