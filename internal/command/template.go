@@ -18,7 +18,12 @@ func (c *Command) TemplateStatus(w io.Writer) error {
 		return err
 	}
 
-	ids, err := template.ExtractIDs(c.Paths.Repository.TemplateFile)
+	repoPaths, err := c.Paths.Repository()
+	if err != nil {
+		return err
+	}
+
+	ids, err := template.ExtractIDs(repoPaths.TemplateFile)
 	if err != nil {
 		return err
 	}
@@ -36,7 +41,12 @@ func (c *Command) TemplateSet(ids ...string) error {
 		return err
 	}
 
-	existingIDs, err := template.ExtractIDs(c.Paths.Repository.TemplateFile)
+	repoPaths, err := c.Paths.Repository()
+	if err != nil {
+		return err
+	}
+
+	existingIDs, err := template.ExtractIDs(repoPaths.TemplateFile)
 	if err != nil {
 		return err
 	}
@@ -48,16 +58,22 @@ func (c *Command) TemplateSet(ids ...string) error {
 	}
 
 	t := template.Template{Coauthors: coauthors}
-	if err := template.WriteFile(c.Paths.Repository.TemplateFile, t); err != nil {
+	if err := template.WriteFile(repoPaths.TemplateFile, t); err != nil {
 		return err
 	}
-	return repository.SetCommitTemplate(c.Paths.Repository.Root, c.Paths.Repository.TemplateFile)
+	return repository.SetCommitTemplate(repoPaths.Root, repoPaths.TemplateFile)
 }
 
 // TemplateClear emptys the coauthors Template
 func (c *Command) TemplateClear() error {
-	defer repository.UnsetCommitTemplate(c.Paths.Repository.Root)
-	if err := os.Remove(c.Paths.Repository.TemplateFile); err != nil {
+	repoPaths, err := c.Paths.Repository()
+	if err != nil {
+		return err
+	}
+
+	defer repository.UnsetCommitTemplate(repoPaths.Root)
+
+	if err := os.Remove(repoPaths.TemplateFile); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return nil
 		}

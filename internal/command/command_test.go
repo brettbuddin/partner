@@ -49,8 +49,11 @@ func TestActivationWorkflow(t *testing.T) {
 	err = cmd.TemplateSet("brett")
 	require.NoError(t, err)
 
+	repoPaths, err := cmd.Paths.Repository()
+	require.NoError(t, err)
+
 	// Verify the template contains what we'd expect
-	tmplb, err := ioutil.ReadFile(cmd.Paths.Repository.TemplateFile)
+	tmplb, err := ioutil.ReadFile(repoPaths.TemplateFile)
 	require.NoError(t, err)
 	require.Equal(t, templateExample(`
 # Managed by partner
@@ -76,7 +79,7 @@ persona  Person A      a@buddin.org      manual
 `), out.String())
 
 	// Verify the template contains what we'd expect
-	tmplb, err = ioutil.ReadFile(cmd.Paths.Repository.TemplateFile)
+	tmplb, err = ioutil.ReadFile(repoPaths.TemplateFile)
 	require.NoError(t, err)
 	require.Equal(t, templateExample(`
 # Managed by partner
@@ -96,7 +99,7 @@ Co-Authored-By: "Person A" <a@buddin.org>
 	require.Equal(t, "", out.String())
 
 	// Verify the template file is deleted
-	_, err = os.Stat(cmd.Paths.Repository.TemplateFile)
+	_, err = os.Stat(repoPaths.TemplateFile)
 	require.Error(t, err)
 }
 
@@ -109,40 +112,38 @@ func newWorkspace(t *testing.T) Paths {
 		os.RemoveAll(tmp)
 	})
 
+	absTmp, err := filepath.Abs(tmp)
+	require.NoError(t, err)
+
 	cmd := exec.Command("git", "init")
-	cmd.Dir = tmp
+	cmd.Dir = absTmp
 	err = cmd.Run()
 	require.NoError(t, err)
 
 	return Paths{
-		Repository: RepositoryPaths{
-			Root:         tmp,
-			TemplateFile: filepath.Join(tmp, ".git/gitmessage.txt"),
-		},
-		ManifestFile: filepath.Join(tmp, "manifest.json"),
+		WorkDir:      absTmp,
+		ManifestFile: filepath.Join(absTmp, "manifest.json"),
 	}
 }
 
 func TestDefaultPaths_RepositoryPathCalculation(t *testing.T) {
 	wsPaths := newWorkspace(t)
 
-	paths, err := DefaultPaths(wsPaths.Repository.Root)
-
-	// `git rev-parse --show-toplevel` returns a different path than I set.
-	// Probably a macOS thing. If this test starts to fail, this is probably
-	// why.
-	paths.Repository.Root = strings.TrimPrefix(paths.Repository.Root, "/private")
-	paths.Repository.TemplateFile = strings.TrimPrefix(paths.Repository.TemplateFile, "/private")
-
+	repoPaths, err := wsPaths.Repository()
 	require.NoError(t, err)
-	require.Equal(t, wsPaths.Repository, paths.Repository)
+
+	// `git rev-parse --show-toplevel` returns a different path on macOS,
+	// because /tmp points at /private/tmp.
+	repoPaths.Root = strings.TrimPrefix(repoPaths.Root, "/private")
+	repoPaths.TemplateFile = strings.TrimPrefix(repoPaths.TemplateFile, "/private")
+
+	require.Equal(t, wsPaths.WorkDir, repoPaths.Root)
+	require.Equal(t, filepath.Join(wsPaths.WorkDir, ".git/gitmessage.txt"), repoPaths.TemplateFile)
 }
 
 func TestDefaultPath_PathExpansion(t *testing.T) {
-	wsPaths := newWorkspace(t)
-
 	t.Run("default manifest path", func(t *testing.T) {
-		paths, err := DefaultPaths(wsPaths.Repository.Root)
+		paths, err := DefaultPaths(".")
 		require.NoError(t, err)
 		require.NotEqual(t, "~/.config/partner/manifest.json", paths.ManifestFile)
 		require.True(t, strings.HasSuffix(paths.ManifestFile, "/.config/partner/manifest.json"), "tilde was not expanded to home directory")
@@ -152,7 +153,7 @@ func TestDefaultPath_PathExpansion(t *testing.T) {
 		os.Setenv("PARTNER_MANIFEST", "~/other/path/manifest.json")
 		defer os.Unsetenv("PARTNER_MANIFEST")
 
-		paths, err := DefaultPaths(wsPaths.Repository.Root)
+		paths, err := DefaultPaths(".")
 		require.NoError(t, err)
 		require.NotEqual(t, "~/other/path/manifest.json", paths.ManifestFile)
 		require.True(t, strings.HasSuffix(paths.ManifestFile, "/other/path/manifest.json"), "tilde was not expanded to home directory")
@@ -162,7 +163,7 @@ func TestDefaultPath_PathExpansion(t *testing.T) {
 		os.Setenv("PARTNER_MANIFEST", "$HOME/.config/partner/manifest.json")
 		defer os.Unsetenv("PARTNER_MANIFEST")
 
-		paths, err := DefaultPaths(wsPaths.Repository.Root)
+		paths, err := DefaultPaths(".")
 		require.NoError(t, err)
 		require.NotEqual(t, "$HOME/.config/partner/manifest.json", paths.ManifestFile)
 		require.True(t, strings.HasSuffix(paths.ManifestFile, "/.config/partner/manifest.json"), "environment variable was not expanded to home directory")

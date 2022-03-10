@@ -26,8 +26,21 @@ func New(paths Paths) *Command {
 
 // Paths contains paths necessary for partner to do its work
 type Paths struct {
+	WorkDir      string
 	ManifestFile string
-	Repository   RepositoryPaths
+}
+
+// Repository returns paths relative to the root of the Git project. If no Git
+// repository (.git directory) is found, an error will be returned.
+func (p Paths) Repository() (RepositoryPaths, error) {
+	root, err := repository.Root(p.WorkDir)
+	if err != nil {
+		return RepositoryPaths{}, err
+	}
+	return RepositoryPaths{
+		Root:         root,
+		TemplateFile: filepath.Join(root, ".git/gitmessage.txt"),
+	}, nil
 }
 
 // Repository specific paths
@@ -38,27 +51,19 @@ type RepositoryPaths struct {
 
 // DefaultPaths returns calculated Git repository root, commit template and
 // manifest paths relative to the current working directory.
-func DefaultPaths(pwd string) (Paths, error) {
-	root, err := repository.Root(pwd)
-	if err != nil {
-		return Paths{}, err
-	}
-
+func DefaultPaths(workDir string) (Paths, error) {
 	manifestPath := os.Getenv("PARTNER_MANIFEST")
 	if manifestPath == "" {
 		manifestPath = manifest.DefaultPath
 	}
-	manifestPath, err = homedir.Expand(manifestPath)
+	manifestPath, err := homedir.Expand(manifestPath)
 	if err != nil {
 		return Paths{}, err
 	}
 
 	return Paths{
+		WorkDir:      workDir,
 		ManifestFile: os.ExpandEnv(manifestPath),
-		Repository: RepositoryPaths{
-			Root:         root,
-			TemplateFile: filepath.Join(root, ".git/gitmessage.txt"),
-		},
 	}, nil
 }
 
