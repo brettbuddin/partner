@@ -69,7 +69,7 @@ $ partner status
 ## Install
 
 ```
-$ go get -u github.com/brettbuddin/partner
+$ go install github.com/brettbuddin/partner@v0.1.0
 ```
 
 ## Environment Variable Overrides
